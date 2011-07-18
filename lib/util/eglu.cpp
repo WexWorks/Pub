@@ -17,9 +17,12 @@ EGLNativeDisplayType GetNativeDisplay() {
   return NULL;
 }
 
-bool InitDisplay(EGLNativeDisplayType native_display, EGLDisplay *display,
+bool InitDisplay(EGLNativeDisplayType *native_display, EGLDisplay *display,
                  EGLConfig *config) {
-  *display = eglGetDisplay(native_display);
+  if (!*native_display) {
+   *native_display = GetNativeDisplay();
+  }
+  *display = eglGetDisplay(*native_display);
   if (*display == EGL_NO_DISPLAY)
     *display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
   if (*display == EGL_NO_DISPLAY) {

@@ -110,12 +110,38 @@ GLuint CreateProgram(GLuint vp, GLuint fp) {
 class ProgramCache {
 public:
   ProgramCache() :
-    program_count_(0), program_alloc_(0), program_(NULL), name_(NULL) {
+    path_(NULL), program_count_(0), program_alloc_(0), program_(NULL), name_(NULL) {
+#if LINUX || ANDROID
+    sep_ = ':';
+#endif
+#if WINDOWS
+    sep_ = ';';
+#endif
   }
 
   virtual ~ProgramCache() {
+    free(path_);
     free(program_);
     free(name_);
+  }
+
+  bool AddPath(const char *path) {
+    free(path_);
+    char *oldpath = path_;
+    int oldlen = path_ ? strlen(path_) : 0;
+    int newlen = oldlen + strlen(path) + 1;
+    path_ = (char *)malloc(newlen);
+    if (path_ == NULL) {
+      path_ = oldpath;
+      return false;
+    }
+    if (oldpath) {
+      strcpy(path_, oldpath);
+    }
+    ((char *)path_)[oldlen] = sep_;
+    strcpy((char *)&path_[oldlen+1],path);
+    free(oldpath);
+    return true;
   }
 
   bool Invalidate() {
@@ -154,37 +180,41 @@ private:
   }
 
   GLuint Load(const char *name) {
-#if LINUX
-    const char *fileroot = "/home/wex/WexWorks/Apps/app/SpaceSheep";
-#endif
-#if ANDROID
-    const char *fileroot = "/sdcard/WexWorks";
-#endif
-    char basename[1024];
-    sprintf(basename, "%s/%s", fileroot, name);
-
-    char filename[1024];
-    sprintf(filename, "%s.vp", basename);
-    const char *code = glesu::LoadTextFile(filename);
-    if (!code)
-      return false;
-    GLuint vp = glesu::CompileShader(GL_VERTEX_SHADER, code);
-    if (!vp)
-      return false;
-    sprintf(filename, "%s.fp", basename);
-    code = glesu::LoadTextFile(filename);
-    if (!code)
-      return false;
-    GLuint fp = glesu::CompileShader(GL_FRAGMENT_SHADER, code);
-    if (!fp)
-      return false;
-    GLuint program = glesu::CreateProgram(vp, fp);
-    if (!program)
-      return false;
-
+    char path[4096];
+    if (path_) {
+      strcpy(path, path_);
+    } else {
+      path[0] = '.';
+      path[1] = 0;
+    }
+    GLuint program = 0;
+    for (const char *p = strtok(path, &sep_); p; p = strtok(NULL, &sep_)) {
+      char basename[1024];
+      sprintf(basename, "%s/%s", p, name);
+      char filename[1024];
+      sprintf(filename, "%s.vp", basename);
+      const char *code = glesu::LoadTextFile(filename);
+      if (!code)
+        return false;
+      GLuint vp = glesu::CompileShader(GL_VERTEX_SHADER, code);
+      if (!vp)
+        return false;
+      sprintf(filename, "%s.fp", basename);
+      code = glesu::LoadTextFile(filename);
+      if (!code)
+        return false;
+      GLuint fp = glesu::CompileShader(GL_FRAGMENT_SHADER, code);
+      if (!fp)
+        return false;
+      program = glesu::CreateProgram(vp, fp);
+      if (!program)
+        return false;
+    }
     return program;
   }
 
+  char *path_;
+  char sep_;
   int program_count_;
   int program_alloc_;
   GLuint *program_;
@@ -192,6 +222,10 @@ private:
 };
 
 static ProgramCache program_cache_;
+
+bool AddShaderPath(const char *path) {
+  return program_cache_.AddPath(path);
+}
 
 bool InvalidateProgramCache() {
   return program_cache_.Invalidate();

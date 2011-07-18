@@ -11,11 +11,31 @@ App::App()
     , native_display_(0), native_window_(0)
 #endif
 {
-
+#ifdef WINDOWS
+  // Blech: we shouldn't have anything in the ctor!
+  WNDCLASSEX wcex;
+  const char *className = "Win32WindowClass"; // must match eglu.cpp
+  HINSTANCE hInstance = GetModuleHandle(NULL);
+  if (!GetClassInfoEx(hInstance, className, &wcex)) {
+    wcex.cbSize         = sizeof(WNDCLASSEX);
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = hInstance;
+    wcex.hIcon          = LoadIcon(NULL, IDI_APPLICATION);
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = className;
+    wcex.hIconSm        = LoadIcon(NULL, IDI_APPLICATION);
+    if (!RegisterClassEx(&wcex))
+      return false;
+  }
+#endif
 }
 
 App::~App() {
-
 }
 
 #ifdef WINDOWS
@@ -169,30 +189,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wparam, LPARAM lparam) 
 
 bool App::Init(int width, int height) {
 #ifdef WINDOWS
-  native_display_ = GetDC(NULL);
-  WNDCLASSEX wcex;
-  const char *className = "Win32WindowClass"; // must match eglu.cpp
-  HINSTANCE hInstance = GetModuleHandle(NULL);
-  if (!GetClassInfoEx(hInstance, className, &wcex)) {
-    wcex.cbSize         = sizeof(WNDCLASSEX); 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(NULL, IDI_APPLICATION);
-    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = className;
-    wcex.hIconSm        = LoadIcon(NULL, IDI_APPLICATION);
-    if (!RegisterClassEx(&wcex))
-      return false;
-  }
-#endif
-#ifdef LINUX
-  if (!native_display_)
-    native_display_ = XOpenDisplay(NULL);
+  if (native_window_)
+    SetWindowLong(native_window_, GWL_USERDATA, long(this));
 #endif
   return true;
 }

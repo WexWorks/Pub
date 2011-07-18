@@ -10,7 +10,7 @@ namespace ww {
 namespace eglu {
 
 EGLNativeDisplayType GetNativeDisplay();
-bool InitDisplay(EGLNativeDisplayType native_display, EGLDisplay *display,
+bool InitDisplay(EGLNativeDisplayType *native_display, EGLDisplay *display,
                  EGLConfig *config);
 EGLNativeWindowType CreateNativeWindow(const char *title, int width,
                                        int height, EGLDisplay display,
