@@ -18,15 +18,17 @@ fi
 APP=$1
 DOMAIN=$2
 LCAPP=${APP,,}
+LCDOMAIN=${DOMAIN,,}
 OLDAPP=HelloApp
 OLDDOMAIN=HelloAppDomain
 LCOLDAPP=${OLDAPP,,}
+LCOLDDOMAIN=${OLDDOMAIN,,}
 
 
 # Called for each non-directory (e.g. text) file, replacing any instances
 # of the OLD domain and app names with the NEW names from command line args
 function replace_file_content {
-  sed s/$OLDAPP/$APP/g $1 | sed s/$LCOLDAPP/$LCAPP/g | sed s/$OLDDOMAIN/$DOMAIN/g > $1.tmp
+  sed s/$OLDAPP/$APP/g $1 | sed s/$LCOLDAPP/$LCAPP/g | sed s/$OLDDOMAIN/$DOMAIN/g | sed s/$LCOLDDOMAIN/$LCDOMAIN/g > $1.tmp
   rm $1
   mv $1.tmp $1
 }
@@ -39,6 +41,7 @@ function rename_files {
     declare newfile=${file/$OLDAPP/$APP}
     newfile=${newfile/$LCOLDAPP/$LCAPP}
     newfile=${newfile/$OLDDOMAIN/$DOMAIN}
+    newfile=${newfile/$LCOLDDOMAIN/$LCDOMAIN}
     if [[ $file != $newfile ]] ; then
       mv $file $newfile
     fi

@@ -137,10 +137,12 @@ public:
     }
     if (oldpath) {
       strcpy(path_, oldpath);
+      path_[oldlen] = sep_;
+      strcpy(&path_[oldlen+1], path);
+      free(oldpath);
+    } else {
+      strcpy(path_, path);
     }
-    ((char *)path_)[oldlen] = sep_;
-    strcpy((char *)&path_[oldlen+1],path);
-    free(oldpath);
     return true;
   }
 
