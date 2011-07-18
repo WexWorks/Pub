@@ -1,5 +1,5 @@
-WexWorks Application Development
-================================
+WexWorks Public Application Development Tree
+============================================
 
 Mobile application development code base:
 
@@ -10,8 +10,8 @@ ext - External libraries
 Supports Android (and later, iOS) C++ development with lightweight
 emulation and debugging on Linux and Windows.
 
-Includes support from the ILM Base vector and matrix library and
-the ARM MALI OpenGL ES 2.0 emulator.
+Requires the ILM Base vector and matrix library and the 
+ARM OpenGL ES 2.0 emulator.
 
 Use app/MakeApp to create a new application from a template.
 
@@ -19,12 +19,12 @@ Use app/MakeApp to create a new application from a template.
 Machine Configuration
 ---------------------
 
-1. Install recent Ubuntu.  I'm using 32-bit 10.10.
+1. Install recent Ubuntu (e.g. 32-bit 10.10).
 2. Install proprietary NVIDIA linux drivers.
-3. Install recent version of eclipse, including C++ and Java
-5. Install Android SDK, ADT and NDK (I put these in /opt/android)
-   Add sdk-root/{platform-tools,tools} and ndk-root to your PATH
-     (e.g. in ~/.bashrc)
+3. Install recent version of eclipse, including C++ and Java support.
+5. Install Android SDK, ADT and NDK (I put these in /opt/android).
+   Add sdk-root/{platform-tools,tools} and ndk-root to your PATH (e.g.
+   in ~/.bashrc)
 6. Attach Android device, enable:
    Settings -> Applications -> Development -> USB Debugging
 7. Attach device using USB cable.  Use "adb devices" to check.
@@ -48,18 +48,18 @@ replacing instances of HelloApp in the configuration and code files.
 New apps should be placed in the <ToT>/app subdirectory.
 
 
-Opening an Eclipse Workspace:
+Opening a new Eclipse Workspace:
 
 1.  Start eclipse
-2.  Set Workspace directory.  I recommend ~/workspace/<AppName>-<OS>, e.g
-    ~/workspace/MyApp-linux, with a unique WS for each app+OS.
+2.  Set Workspace directory.  I recommend ~/workspace/<domain>-<OS>, e.g
+    ~/workspace/wexworks-linux, with a unique WS for each OS.
 3.  Set Google C++ style: 
     Window -> Preferences -> C/C++ -> Code Style -> Import...
     Load: <ToT>/lib/eclipse/google-c++-style.xml
 4.  Set Android SDK root:
     Window -> Preferences -> Android -> SDK Location: Browse...
-    And point it to SDK, e.g.: /opt/android/android-sdk-linux_x86
-    Hit Apply to verify that you have at least 2.2
+    and point it to SDK, e.g.: /opt/android/android-sdk-linux_x86
+    hit Apply to verify that you have at least 2.2
 5.  Set Top of Tree directory in build variables with:
     Window -> Preferences -> General ->Workspace -> Linked Resources -> New...
     Set Name to "top_of_tree" and Folder... to set the location of <ToT>
@@ -69,21 +69,19 @@ Opening an Eclipse Workspace:
 7.  File -> Import -> General -> Existing Projects into Workspace, hit Next...
     Browse... to <ToT> and hit OK.
     myapp and util should both be visible and selected in the Projects list.
-    Select only the Linux project directories and import them into the workspace.
+    Select only the Linux projects and import them into the workspace.
 8.  Open the C/C++ Perspective using the drop-down list in the upper right
     corner of the Eclipse window, next to the Java Perspective.
-    I also like to drag the perspective tab a bit to the left for more room.
 9.  Build the app using Control-b.  It should build without errors.
 10. Set the runtime LD_LIBRARY_PATH by right clicking on the project (you will
     need to set this separately in each project):
     Properties -> Run/Debug Settings -> (Select launch config) -> Edit...
-    Select the Environment tab and hit New...
-    Name: LD_LIBRARY_PATH
+    Select the Environment tab and hit New... and set it to e.g.:
+    LD_LIBRARY_PATH=/home/wex/WexWorks/Pub/ext/ARM/Mali_Developer_Tools/OpenGL_ES_2_0_Emulator_1.2.0/bin
 11. If first time using android, copy the vertex and fragment shaders to device:
     adb push <tot>/MyApp/src/myapp/myapp.vp /sdcard/mydomain/myapp.vp
     adb push <tot>/MyApp/src/myapp/myapp.fp /sdcard/mydomain/myapp.fp
-12. Lauch as Android Application
-13. Debug the application to verify that it is running.
+12. Debug or launch as Android Application to verify everything worked.
 
 
 Adding Files:
@@ -132,6 +130,5 @@ o On Windows/Linux, hit ESC to exit.
 o Eclipse has a race condition which can result in a black console window.
   Only workaround is to restart eclipse until it goes away.
 
+
 Copyright (c), 2011 by WexWorks, LLC. All Rights Reserved
-
-
