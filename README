@@ -1,0 +1,137 @@
+WexWorks Application Development
+================================
+
+Mobile application development code base:
+
+app - Applications
+lib - Shared libraries
+ext - External libraries
+
+Supports Android (and later, iOS) C++ development with lightweight
+emulation and debugging on Linux and Windows.
+
+Includes support from the ILM Base vector and matrix library and
+the ARM MALI OpenGL ES 2.0 emulator.
+
+Use app/MakeApp to create a new application from a template.
+
+
+Machine Configuration
+---------------------
+
+1. Install recent Ubuntu.  I'm using 32-bit 10.10.
+2. Install proprietary NVIDIA linux drivers.
+3. Install recent version of eclipse, including C++ and Java
+5. Install Android SDK, ADT and NDK (I put these in /opt/android)
+   Add sdk-root/{platform-tools,tools} and ndk-root to your PATH
+     (e.g. in ~/.bashrc)
+6. Attach Android device, enable:
+   Settings -> Applications -> Development -> USB Debugging
+7. Attach device using USB cable.  Use "adb devices" to check.
+   For devices with no number (e.g. "????????"), see:
+   http://www.google.com/support/forum/p/android/thread?tid=08945730bbd7b22b
+8. Install the latest ARM OpenGL ES 2.0 emulator in <ToT>/ext from:
+   http://www.malideveloper.com/developer-resources/tools/opengl-es-20-emulator.php
+9. Install the latest ILMBase math, vector and matrix libs in <ToT>/ext from:
+   http://www.openexr.com/downloads.html
+
+
+
+Build Instructions
+------------------
+
+Create a new application by running: bash makeapp.sh MyApp mydomain
+Use your app and domain name, of course.  This will create a new directory
+using the HelloApp template and renaming directories and files and
+replacing instances of HelloApp in the configuration and code files.
+
+New apps should be placed in the <ToT>/app subdirectory.
+
+
+Opening an Eclipse Workspace:
+
+1.  Start eclipse
+2.  Set Workspace directory.  I recommend ~/workspace/<AppName>-<OS>, e.g
+    ~/workspace/MyApp-linux, with a unique WS for each app+OS.
+3.  Set Google C++ style: 
+    Window -> Preferences -> C/C++ -> Code Style -> Import...
+    Load: <ToT>/lib/eclipse/google-c++-style.xml
+4.  Set Android SDK root:
+    Window -> Preferences -> Android -> SDK Location: Browse...
+    And point it to SDK, e.g.: /opt/android/android-sdk-linux_x86
+    Hit Apply to verify that you have at least 2.2
+5.  Set Top of Tree directory in build variables with:
+    Window -> Preferences -> General ->Workspace -> Linked Resources -> New...
+    Set Name to "top_of_tree" and Folder... to set the location of <ToT>
+    containing app, ext, and lib directories.
+6.  If building for Android, set ANDROID_NDK_ROOT=/opt/android/android-ndk-r5c
+    in Window -> Preferences -> C/C++ -> Environment -> Add...
+7.  File -> Import -> General -> Existing Projects into Workspace, hit Next...
+    Browse... to <ToT> and hit OK.
+    myapp and util should both be visible and selected in the Projects list.
+    Select only the Linux project directories and import them into the workspace.
+8.  Open the C/C++ Perspective using the drop-down list in the upper right
+    corner of the Eclipse window, next to the Java Perspective.
+    I also like to drag the perspective tab a bit to the left for more room.
+9.  Build the app using Control-b.  It should build without errors.
+10. Set the runtime LD_LIBRARY_PATH by right clicking on the project (you will
+    need to set this separately in each project):
+    Properties -> Run/Debug Settings -> (Select launch config) -> Edit...
+    Select the Environment tab and hit New...
+    Name: LD_LIBRARY_PATH
+11. If first time using android, copy the vertex and fragment shaders to device:
+    adb push <tot>/MyApp/src/myapp/myapp.vp /sdcard/mydomain/myapp.vp
+    adb push <tot>/MyApp/src/myapp/myapp.fp /sdcard/mydomain/myapp.fp
+12. Lauch as Android Application
+13. Debug the application to verify that it is running.
+
+
+Adding Files:
+
+Create the new file in <tot>/MyApp/src/myapp.  You can have app-specific
+libraries in <tot>/MyApp/src/mylib, or shared libraries in <tot>/lib/mylib.
+
+Linux:
+1. Open the eclipse workspace in MyApp/build/linux
+2. Right click on MyApp project and select New -> File... -> Link
+3. Select Variables... and choose top_of_tree
+4. Append relative path to file, e.g. top_of_tree/app/MyApp/src/myapp/foo.cpp
+
+Android:
+1. Open <tot>/app/MyApp/build/android/jni/Android.mk
+2. Add the file by adding it to LOCAL_SRC_FILES following the existing
+   conventions, adding a new directory variable if needed.
+
+Windows:
+1. Start Visual Studio on <tot>/app/MyApp/build/vs10/myapp.sln
+2. Add file to existing or new folders in project.
+
+
+Tips
+----
+
+o You can debug Android apps running on the device using a remote gdb session
+  as detailed in the NDK docs.
+
+o You can also debug using gdb and the remote server in Eclipse:
+  http://mhandroid.wordpress.com/2011/01/23/using-eclipse-for-android-cc-debugging
+
+o Window -> Show View... -> Android -> {Devices,LogCat}
+
+o Download a free logcat viewer app (e.g. aLogcat) from the Android Market.
+  Check log for errors after crashes, use util/debug.h functions to print to
+  log/console.
+
+o Device screenshots can be taken from the Devices window with Camera.
+  Also easy to kill app from the Devices window by selecting and Stop.
+
+o On Windows/Linux, hit 'r' to emulate rotating the screen.
+
+o On Windows/Linux, hit ESC to exit.
+
+o Eclipse has a race condition which can result in a black console window.
+  Only workaround is to restart eclipse until it goes away.
+
+Copyright (c), 2011 by WexWorks, LLC. All Rights Reserved
+
+

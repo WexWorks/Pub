@@ -1,0 +1,26 @@
+MakeApp
+=======
+
+A template used to configure a new application that runs on Linux using the
+Mali OpenGL ES Emulator and on Android devices in Eclipse. The makeapp.sh
+script will update the directories and files in the included template to use
+the application and domain name specified on the command line.
+
+Individual applications share the external libraries in <ToT>/ext and
+<ToT>/lib including the ARM Mali OpenGL-ES emulator and the ILM math
+libraries, which include a nice set of vector and matrix template types
+and algorithms.
+
+Note that we use OpenGL ES 2.0, so this code will not run on the Android
+SDK emulator, which only supports ES 1.x.
+
+
+To create a new application:
+
+1. cd <ToT>/app
+2. MakeApp/makeapp.sh MyApp mydomain
+3. Follow machine and IDE configuration instructions in <ToT>/README
+
+
+Copyright (c) by Daniel Wexler, WexWorks LLC, 2011, All Rights Reserved
+
