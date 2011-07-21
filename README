@@ -32,6 +32,11 @@ Machine Configuration
    http://www.google.com/support/forum/p/android/thread?tid=08945730bbd7b22b
 8. Install the latest ARM OpenGL ES 2.0 emulator in <ToT>/ext from:
    http://www.malideveloper.com/developer-resources/tools/opengl-es-20-emulator.php
+   There are separate Windows and Linux installers, with the Windows installer
+   having spaces in filenames vs. underscores in Linux.  Also, the Windows
+   installer has a "v" in the version name, and includes a lib directory and
+   .dll files instead of .so files in the bin directory.  You can set the
+   directory name in the common.vsprops User Macros along with TopOfTree.
 9. Install the latest ILMBase (math, vector & matrix) libs in <ToT>/ext from:
    http://www.openexr.com/downloads.html
 
@@ -89,6 +94,16 @@ Opening a new Eclipse Workspace:
     from then on you can hit the Debug (bug) button on the toolbar.
 
 
+Opening a new Visual Studio Solution:
+
+1. Start Visual Studio
+2. In Express version, Tools -> Advanced Settings (to enable Property Mgr)
+3. Load <ToT>/app/MyApp/build/vs10/myapp.sln
+3. View -> Property Manager...
+4. Open myapp -> Debug|Win32 -> common -> User Macros
+   Set TopOfTree variable
+5. Close Property Manager (optional)
+6. 
 Adding Files:
 
 Create the new file in <tot>/MyApp/src/myapp.  You can have app-specific

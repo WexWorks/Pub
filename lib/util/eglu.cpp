@@ -7,6 +7,8 @@
 namespace ww {
 namespace eglu {
 
+static const char *class_name_ = "Win32WindowClass";
+
 EGLNativeDisplayType GetNativeDisplay() {
 #ifdef WINDOWS
   return GetDC(NULL);
@@ -17,12 +19,9 @@ EGLNativeDisplayType GetNativeDisplay() {
   return NULL;
 }
 
-bool InitDisplay(EGLNativeDisplayType *native_display, EGLDisplay *display,
+bool InitDisplay(EGLNativeDisplayType native_display, EGLDisplay *display,
                  EGLConfig *config) {
-  if (!*native_display) {
-   *native_display = GetNativeDisplay();
-  }
-  *display = eglGetDisplay(*native_display);
+  *display = eglGetDisplay(native_display);
   if (*display == EGL_NO_DISPLAY)
     *display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
   if (*display == EGL_NO_DISPLAY) {
@@ -57,6 +56,30 @@ bool InitDisplay(EGLNativeDisplayType *native_display, EGLDisplay *display,
 
   return true;
 }
+
+#if WINDOWS
+bool SetEventLoop(WNDPROC WndProc) {
+  WNDCLASSEX wcex;
+  HINSTANCE hInstance = GetModuleHandle(NULL);
+  if (!GetClassInfoEx(hInstance, class_name_, &wcex)) {
+    wcex.cbSize         = sizeof(WNDCLASSEX);
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = hInstance;
+    wcex.hIcon          = LoadIcon(NULL, IDI_APPLICATION);
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = class_name_;
+    wcex.hIconSm        = LoadIcon(NULL, IDI_APPLICATION);
+    if (!RegisterClassEx(&wcex))
+      return false;
+  }
+  return true;
+}
+#endif
 
 #ifdef LINUX
 Bool WaitForMap(Display *d, XEvent *e, char *win_ptr) {
@@ -138,16 +161,15 @@ EGLNativeWindowType CreateNativeWindow(const char *title, int width,
 
   // Register class
   WNDCLASSEX wcex;
-  const char *className = "Win32WindowClass"; // must match app.cpp
   HINSTANCE hInstance = GetModuleHandle(NULL);
-  if (!GetClassInfoEx(hInstance, className, &wcex))
+  if (!GetClassInfoEx(hInstance, class_name_, &wcex))
     return NULL;
 
   // Create window
   AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
   width = rect.right - rect.left;     // adjust size for window borders
   height = rect.bottom - rect.top;
-  HWND hWnd = CreateWindow(className, "", WS_OVERLAPPEDWINDOW,
+  HWND hWnd = CreateWindow(class_name_, "", WS_OVERLAPPEDWINDOW,
     CW_USEDEFAULT, CW_USEDEFAULT, width, height, NULL, NULL, hInstance, NULL);
 
   if (hWnd)

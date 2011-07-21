@@ -1,44 +1,13 @@
 // Copyright (c) 2011 by WexWorks, LLC -- All Rights Reserved
 
 #include "util/app.h"
+#include "util/timer.h"
 #include <stdio.h>
 
 using namespace ww;
 
-App::App()
-  : done_(false)
-#if USE_EGL
-    , native_display_(0), native_window_(0)
-#endif
-{
 #ifdef WINDOWS
-  // Blech: we shouldn't have anything in the ctor!
-  WNDCLASSEX wcex;
-  const char *className = "Win32WindowClass"; // must match eglu.cpp
-  HINSTANCE hInstance = GetModuleHandle(NULL);
-  if (!GetClassInfoEx(hInstance, className, &wcex)) {
-    wcex.cbSize         = sizeof(WNDCLASSEX);
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(NULL, IDI_APPLICATION);
-    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = className;
-    wcex.hIconSm        = LoadIcon(NULL, IDI_APPLICATION);
-    if (!RegisterClassEx(&wcex))
-      return false;
-  }
-#endif
-}
-
-App::~App() {
-}
-
-#ifdef WINDOWS
+#include "util/eglu.h"
 #include <WindowsX.h>
 
 void Win32Command(HWND hWnd, int id, HWND hWndctl, UINT codenotify) {
@@ -77,39 +46,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wparam, LPARAM lparam) 
     if (app)
       app->Quit();
     break;
-#if 0
-  case WM_KEYDOWN:
-    event.type = Event::KeyDown;
-    // High-order bit indicates key is pressed, low-order is toggle
-    event.shift = bool(GetKeyState(VK_SHIFT) & HIGH_BIT);
-    event.control = bool(GetKeyState(VK_CONTROL) & HIGH_BIT);
-    event.alt = bool(GetKeyState(VK_MENU) & HIGH_BIT);
 
+  case WM_KEYDOWN: {
+    char key = 0;
     switch (wparam) {
+    case VK_ESCAPE:
+      if (app)
+        app->Quit();
+      break;
     case 0x0A:      // linefeed
     case VK_INSERT:
     case VK_DELETE:
     case VK_F2:
       break;
-    case 0x08:      event.key = Event::BackspaceKey;    break;
-    case 0x1B:      event.key = Event::EscapeKey;       break;
-    case 0x0D:      event.key = Event::EnterKey;        break;
-    case VK_LEFT:   event.key = Event::LeftArrowKey;    break;
-    case VK_RIGHT:  event.key = Event::RightArrowKey;   break;
-    case VK_DOWN:   event.key = Event::DownArrowKey;    break;
-    case VK_UP:     event.key = Event::UpArrowKey;      break;
+#if 0
+    case 0x08:      key = Event::BackspaceKey;    break;
+    case 0x1B:      key = Event::EscapeKey;       break;
+    case 0x0D:      key = Event::EnterKey;        break;
+    case VK_LEFT:   key = Event::LeftArrowKey;    break;
+    case VK_RIGHT:  key = Event::RightArrowKey;   break;
+    case VK_DOWN:   key = Event::DownArrowKey;    break;
+    case VK_UP:     key = Event::UpArrowKey;      break;
     case VK_END:
-    case VK_HOME:   event.key = Event::HomeKey;         break;
-    case VK_PRIOR:  event.key = Event::PageUpKey;       break;
-    case VK_NEXT:   event.key = Event::PageDownKey;     break;
-    case 0xBB:      event.key = '=';                    break;
-    case 0xBD:      event.key = '-';                    break;
-    default:
-      event.key = char(tolower((TCHAR)wparam));
-    }
-
-    break;
+    case VK_HOME:   key = Event::HomeKey;         break;
+    case VK_PRIOR:  key = Event::PageUpKey;       break;
+    case VK_NEXT:   key = Event::PageDownKey;     break;
 #endif
+    case 0xBB:      key = '=';                    break;
+    case 0xBD:      key = '-';                    break;
+
+    default:
+      key = char(tolower((TCHAR)wparam));
+      if (key == 'r' || key == 'R') {
+        RECT rect;
+        GetWindowRect(hWnd, &rect);
+        int tmp = rect.bottom;
+        rect.bottom = rect.right;
+        rect.right = rect.bottom;
+        MoveWindow(hWnd, rect.left, rect.top, rect.right, rect.bottom, true);
+      }
+    }
+                   }
+    break;
+
   case WM_LBUTTONDOWN:
   case WM_MBUTTONDOWN:
   case WM_RBUTTONDOWN:
@@ -133,6 +112,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wparam, LPARAM lparam) 
 #endif
     break;
                       }
+  case WM_CHAR:
+    break;
+
   case WM_SETFOCUS:
     SetFocus(hWnd);
     return 0;
@@ -187,6 +169,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wparam, LPARAM lparam) 
 }
 #endif  // WINDOWS
 
+App::App()
+  : done_(false)
+#if USE_EGL
+    , native_display_(0), native_window_(0)
+#endif
+{
+#ifdef WINDOWS
+  eglu::SetEventLoop(WndProc);
+#endif
+}
+
+App::~App() {
+}
+
 bool App::Init(int width, int height) {
 #ifdef WINDOWS
   if (native_window_)
@@ -196,13 +192,20 @@ bool App::Init(int width, int height) {
 }
 
 bool App::Run() {
+  Timer timer;
+  float last_frame_time = 0;
+
 #ifdef WINDOWS
   MSG msg = {0};
   while (!done_) {
-    if (GetMessage(&msg, native_window_, 0, 0) == -1)
-      return false;
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
+    if (PeekMessage(&msg, native_window_, 0, 0, PM_REMOVE) == -1) {
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
+    float time = timer.Elapsed();
+    float seconds = time - last_frame_time;
+    last_frame_time = time;
+    Step(seconds);
   }
 #endif
 
@@ -276,7 +279,10 @@ bool App::Run() {
         break;
       }
     }
-    Repaint();
+    float time = timer.Elapsed();
+    float seconds = time - last_frame_time;
+    last_frame_time = time;
+    Step(seconds);
   }
 #endif // LINUX
 

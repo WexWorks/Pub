@@ -112,10 +112,12 @@ public:
   ProgramCache() :
     path_(NULL), program_count_(0), program_alloc_(0), program_(NULL), name_(NULL) {
 #if LINUX || ANDROID
-    sep_ = ':';
+    dir_sep_ = "/";
+    path_sep_ = ":";
 #endif
 #if WINDOWS
-    sep_ = ';';
+    dir_sep_ = "\\";
+    path_sep_ = ";";
 #endif
   }
 
@@ -137,7 +139,7 @@ public:
     }
     if (oldpath) {
       strcpy(path_, oldpath);
-      path_[oldlen] = sep_;
+      path_[oldlen] = path_sep_[0];
       strcpy(&path_[oldlen+1], path);
       free(oldpath);
     } else {
@@ -190,9 +192,9 @@ private:
       path[1] = 0;
     }
     GLuint program = 0;
-    for (const char *p = strtok(path, &sep_); p; p = strtok(NULL, &sep_)) {
+    for (const char *p = strtok(path, path_sep_); p; p = strtok(NULL, path_sep_)) {
       char basename[1024];
-      sprintf(basename, "%s/%s", p, name);
+      sprintf(basename, "%s%s%s", p, dir_sep_, name);
       char filename[1024];
       sprintf(filename, "%s.vp", basename);
       const char *code = glesu::LoadTextFile(filename);
@@ -216,7 +218,7 @@ private:
   }
 
   char *path_;
-  char sep_;
+  char *path_sep_, *dir_sep_;
   int program_count_;
   int program_alloc_;
   GLuint *program_;
